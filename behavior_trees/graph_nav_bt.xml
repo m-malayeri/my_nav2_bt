@@ -1,0 +1,20 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveSequence name="root">
+
+      <Fallback name="StopIfObstacle">
+        <Not>
+          <IsPathValid name="check_path_validity"/>
+        </Not>
+
+        <!-- Compute route from current pose to goal using nav2_route -->
+        <ComputeRouteToPose name="compute_route" goal="{goal}" path="{planned_path}" />
+
+        <!-- Follow the computed route -->
+        <FollowPath name="follow_path" path="{planned_path}" />
+
+      </Fallback>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+</root>
