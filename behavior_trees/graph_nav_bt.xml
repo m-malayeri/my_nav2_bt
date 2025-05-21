@@ -1,20 +1,32 @@
-<root main_tree_to_execute="MainTree">
+<root main_tree_to_execute="MainTree" BTCPP_format="4" monitoring="true">
   <BehaviorTree ID="MainTree">
-    <ReactiveSequence name="root">
-
-      <Fallback name="StopIfObstacle">
-        <Not>
-          <IsPathValid name="check_path_validity"/>
-        </Not>
-
-        <!-- Compute route from current pose to goal using nav2_route -->
-        <ComputeRouteToPose name="compute_route" goal="{goal}" path="{planned_path}" />
-
-        <!-- Follow the computed route -->
-        <FollowPath name="follow_path" path="{planned_path}" />
-
-      </Fallback>
-
-    </ReactiveSequence>
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithRoutePlanning">
+        <RecoveryNode number_of_retries="1" name="ComputeRouteToPose">
+          <ComputeAndTrackRoute goal="{goal}" />
+          <ReactiveFallback name="ComputeRouteRecoveryFallback">
+            <GoalUpdated/>
+          </ReactiveFallback>
+        </RecoveryNode>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath controller_id="FollowPath"/>
+          <ReactiveFallback name="FollowPathRecoveryFallback">
+            <GoalUpdated/>
+            <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+          </ReactiveFallback>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
+          </Sequence>
+          <BackUp backup_dist="0.30" backup_speed="0.05"/>
+          <Wait wait_duration="5.0"/>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
   </BehaviorTree>
 </root>
