@@ -3,7 +3,7 @@
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithRoutePlanning">
         <RecoveryNode number_of_retries="1" name="ComputeRouteToPose">
-          <ComputeAndTrackRoute goal="{goal}" />
+          <ComputeRouteToPose goal="{goal}" path="{path}"/>
           <ReactiveFallback name="ComputeRouteRecoveryFallback">
             <GoalUpdated/>
           </ReactiveFallback>
